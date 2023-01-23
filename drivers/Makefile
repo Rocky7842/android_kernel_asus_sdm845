@@ -186,6 +186,8 @@ obj-$(CONFIG_TEE)		+= tee/
 obj-y				+= fan/
 obj-$(CONFIG_TEE)		+= tee/
 
+# ASUS_BSP Deeo : AURA SYNC driver
+obj-y				+= aura_sync/
 # ASUS_BSP Deeo : JEDI Dongle driver
 obj-y				+= ec_hid_driver/
 # ASUS_BSP Deeo : DT power control
