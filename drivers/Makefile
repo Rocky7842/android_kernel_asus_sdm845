@@ -193,9 +193,6 @@ obj-y				+= ec_hid_driver/
 # ASUS_BSP Deeo : DT power control
 obj-y				+= dt_power/
 
-#ASUS_BSP_Display
-obj-y				+= pixelworks/
-
 #ASUS_BSP_Vibrator +++, mark_guo
 obj-$(CONFIG_SND_SOC_TAS2560)		+= motor/tas2560sw-haptics/
 obj-$(CONFIG_TSPDRV)		+= motor/tspdrv/
