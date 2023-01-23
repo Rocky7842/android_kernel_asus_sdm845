@@ -957,7 +957,7 @@ int fts_read_file(char *file_name, u8 **file_buf)
     inode = filp->f_inode;
 #else
     /* reserved for linux earlier verion */
-    inode = filp->f_dentry->d_inode;
+    inode = filp->f_path.dentry->d_inode;
 #endif
 
     file_len = inode->i_size;

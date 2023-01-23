@@ -78,7 +78,7 @@ int file_size(struct file *file, int *p_size) {
 
     if (file) {
         if (p_size) {
-            //error = vfs_getattr(file->f_vfsmnt, file->f_dentry, &stat);
+            //error = vfs_getattr(file->f_vfsmnt, file->f_path.dentry, &stat);
 	    error = vfs_getattr(&file->f_path, &stat);
             *p_size = stat.size;
             error = 0;
