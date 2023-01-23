@@ -144,7 +144,6 @@ struct delayed_work rst_dl_fw_work;
 int rst_flag = 0;
 extern struct snt8100fsr *snt8100fsr_g;
 extern int chip_reset_flag;
-extern enum DEVICE_HWID g_ASUS_hwID;
 /*==========================================================================*/
 /* METHODS                                                                  */
 /*==========================================================================*/
@@ -169,13 +168,7 @@ int upload_firmware_fwd(struct snt8100fsr *snt8100fsr, char *filename) {
 	PRINT_INFO("upload_firmware_fwd: GRIP STATUS:%d", snt8100fsr_g->driver_status);
     rst_work->snt8100fsr = snt8100fsr;
     if(fw_version == 0){
-      if(g_ASUS_hwID <= 6){
-	rst_work->filename = FIRMWARE_LOCATION;
-      }else if(g_ASUS_hwID >6){
-	rst_work->filename = FIRMWARE_LOCATION_PR2;
-      }else{
-	rst_work->filename = FIRMWARE_LOCATION_DEFAULT;
-      }
+	    rst_work->filename = FIRMWARE_LOCATION_DEFAULT;
     }else if(fw_version == 216){
 	    rst_work->filename = FIRMWARE_LOCATION_216;
     }else if(fw_version == 217){
@@ -250,14 +243,7 @@ int upload_firmware(struct snt8100fsr *snt8100fsr, char *filename) {
 	PRINT_INFO("upload_firmware: GRIP STATUS:%d", snt8100fsr_g->driver_status);
     work->snt8100fsr = snt8100fsr;
     
-  PRINT_INFO("ASUS_hwID = %d", g_ASUS_hwID);
-  if(g_ASUS_hwID <= 6){
-    work->filename = FIRMWARE_LOCATION;
-  }else if(g_ASUS_hwID > 6){
-    work->filename = FIRMWARE_LOCATION_PR2;
-  }else{
     work->filename = FIRMWARE_LOCATION_DEFAULT;
-  }
 
     // Allocate our data buffers in contiguous memory for DMA support
     work->data_in = memory_allocate(SNT_FWDL_BUF_SIZE, GFP_DMA);
@@ -620,7 +606,6 @@ cleanup:
 	    fw_loading_status = 0;
 		snt8100fsr_g->driver_status = GRIP_LOAD_FIRM_FAIL;
  	   	PRINT_INFO("GRIP STATUS:%d", snt8100fsr_g->driver_status);
-		ASUSEvtlog("[Grip] Sensor: Load fw fail!!!");
 		mutex_unlock(&snt8100fsr_g->ap_lock);
     }
     return;
@@ -678,7 +663,6 @@ cleanup:
 	fw_loading_status = 0;
 	snt8100fsr_g->driver_status = GRIP_LOAD_FIRM_FAIL;
  	PRINT_INFO("GRIP STATUS:%d", snt8100fsr_g->driver_status);
-	ASUSEvtlog("[Grip] Sensor: Retry Load fw fail!!!");
 	mutex_unlock(&snt8100fsr_g->ap_lock);
     }
     return;

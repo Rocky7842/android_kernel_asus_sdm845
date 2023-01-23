@@ -90,10 +90,8 @@ int write_fail_reset_trigger = 1;
 
 //Reset Function
 void check_i2c_error(void){
-	//ASUSEvtlog("[Grip] read/write fail, count=%d\n", write_fail_count);
 	write_fail_count++;
 	if(write_fail_count >= write_fail_reset_trigger){
-		ASUSEvtlog("[Grip] write fail, call reset_func\n");
     		queue_delayed_work(asus_wq, &rst_gpio_wk, msecs_to_jiffies(0));
 		/* reset write_fail_count in Reset_func */
 		//write_fail_count = 0;

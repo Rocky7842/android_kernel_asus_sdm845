@@ -2850,14 +2850,6 @@ int Check_K_data(void){
 void final_check_frame(int val){
   int ret;
   uint16_t disable_K = 1, enable_bang = 1;
-  //No calibration data file
-  if(val == 0){
-    ASUSEvtlog("[Grip] Read K Data Fail, apply golden K");
-    Apply_K();
-  }else if((Check_K_data() == -1)){
-    ASUSEvtlog("[Grip] Bad K Data, apply golden K");
-    Apply_K();
-  }
 
   /* Read Squeeze factory */
   Read_K_data();
@@ -2894,11 +2886,9 @@ static void work_queue_for_read_calibration_data(struct work_struct *work) {
 		if(retry_cal_read>  0){
     			workqueue_queue_work(&cal_wq, 1000);
 		}else{
-			ASUSEvtlog("[Grip] Read Calibration Data Fail");
 			final_check_frame(0);
 		}
 	}else{
-		ASUSEvtlog("[Grip] Read Calibration Data success");
 		final_check_frame(1);
 	}
 }
