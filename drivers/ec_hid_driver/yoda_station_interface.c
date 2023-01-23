@@ -54,7 +54,6 @@ static int ec_usb_probe(struct hid_device *hdev, const struct hid_device_id *id)
 	printk("[YODA_Station] hid->name : %s\n", hdev->name);
 	printk("[YODA_Station] hid->vendor  : 0x%x\n", hdev->vendor);
 	printk("[YODA_Station] hid->product : 0x%x\n", hdev->product);
-	ASUSEvtlog("[YODA_Station] YODA Station connect\n");
 
 	ec_hid_uevent();
 
@@ -65,7 +64,6 @@ static void ec_usb_remove(struct hid_device *hdev)
 {
 	YODA_station = false;
 	printk("[YODA_Station] ec_usb_remove\n");
-	ASUSEvtlog("[YODA_Station] YODA Station disconnect!!!\n");
 }
 
 static struct hid_device_id ec_idtable[] = {

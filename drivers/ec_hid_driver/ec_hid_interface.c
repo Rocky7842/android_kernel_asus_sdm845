@@ -72,7 +72,6 @@ static int ec_usb_probe(struct hid_device *hdev, const struct hid_device_id *id)
 	printk("[EC_USB] hid->name : %s\n", hdev->name);
 	printk("[EC_USB] hid->vendor  : 0x%x\n", hdev->vendor);
 	printk("[EC_USB] hid->product : 0x%x\n", hdev->product);
-	ASUSEvtlog("[EC_HID] Station ITE 8910 connect\n");
 
 	// Reset station flags
 	station_shutdown = false;
@@ -153,7 +152,6 @@ err_free:
 static void ec_usb_remove(struct hid_device *hdev)
 {
 	printk("[EC_USB] ec_usb_remove\n");
-	ASUSEvtlog("[EC_HID] Station ITE 8910 disconnect!!!\n");
 
 	ec_mutex_lock("hidraw");
 	printk("[EC_HID] hid_used is %d\n", hid_used);
