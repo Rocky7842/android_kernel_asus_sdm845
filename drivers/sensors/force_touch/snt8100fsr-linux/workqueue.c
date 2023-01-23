@@ -52,17 +52,6 @@ static struct workqueue_struct *wq;
 /*==========================================================================*/
 /* METHODS                                                                  */
 /*==========================================================================*/
-int workqueue_init(void) {
-    PRINT_FUNC();
-    wq = create_workqueue(QUEUE_NAME);
-    if (!wq) {
-        PRINT_CRIT("Unable to create_workqueue(%s)", QUEUE_NAME);
-        return -1;
-    }
-
-    return 0;
-}
-
 void workqueue_cleanup() {
     destroy_workqueue(wq);
     wq = NULL;
