@@ -212,4 +212,9 @@ source "drivers/sensors/Kconfig"
 
 source "drivers/tee/Kconfig"
 
+#ASUS_BSP_Vibrator +++, mark_guo
+source "drivers/motor/tas2560sw-haptics/Kconfig"
+source "drivers/motor/tspdrv/Kconfig"
+#ASUS_BSP_Vibrator ---
+
 endmenu
