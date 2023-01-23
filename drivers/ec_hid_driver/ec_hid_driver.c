@@ -2600,7 +2600,7 @@ static ssize_t sync_state_store(struct device *dev,
 
 	if (val == 0){
 		printk("[EC_HID][EXTCON] extcon_dongle->state : %d, val : %d\n", extcon_dongle->state, val);
-		asus_extcon_set_state_sync(extcon_dongle, val);
+		extcon_set_state_sync_asus(extcon_dongle, val);
 
 		pogo_mutex_state = 0;
 		//printk("[EC_HID] pogo_mutex unlock!!!\n");
@@ -2609,7 +2609,7 @@ static ssize_t sync_state_store(struct device *dev,
 		up(&g_hid_data->pogo_sema);
 	}else if ((val > 0 && val <= 4) || val == 7 || (val >= 12 && val <= 15)){
 		printk("[EC_HID][EXTCON] extcon_dongle->state : %d, val : %d\n", extcon_dongle->state, (val+5));
-		asus_extcon_set_state_sync(extcon_dongle, (val+5));
+		extcon_set_state_sync_asus(extcon_dongle, (val+5));
 
 		pogo_mutex_state = 0;
 //		printk("[EC_HID] pogo_mutex unlock!!!\n");
