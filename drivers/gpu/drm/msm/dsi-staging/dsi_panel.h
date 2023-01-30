@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -51,11 +51,6 @@ enum dsi_backlight_type {
 	DSI_BACKLIGHT_MAX,
 };
 
-enum bl_update_flag {
-	BL_UPDATE_DELAY_UNTIL_FIRST_FRAME,
-	BL_UPDATE_NONE,
-};
-
 enum {
 	MODE_GPIO_NOT_VALID = 0,
 	MODE_SEL_DUAL_PORT,
@@ -98,7 +93,6 @@ struct dsi_panel_phy_props {
 
 struct dsi_backlight_config {
 	enum dsi_backlight_type type;
-	enum bl_update_flag bl_update;
 
 	u32 bl_min_level;
 	u32 bl_max_level;
@@ -132,6 +126,10 @@ struct dsi_panel_reset_config {
 	int disp_en_gpio;
 	int lcd_mode_sel_gpio;
 	u32 mode_sel_state;
+#if defined(CONFIG_PXLW_IRIS3)
+	int iris_rst_gpio;
+	int abyp_gpio;
+#endif
 };
 
 enum esd_check_status_mode {
@@ -159,17 +157,6 @@ enum dsi_panel_type {
 	DSI_PANEL = 0,
 	EXT_BRIDGE,
 	DSI_PANEL_TYPE_MAX,
-};
-
-/* Extended Panel config for panels with additional gpios */
-struct dsi_panel_exd_config {
-	int display_1p8_en;
-	int led_5v_en;
-	int switch_power;
-	int led_en1;
-	int led_en2;
-	int oenab;
-	int selab;
 };
 
 struct dsi_panel {
@@ -215,8 +202,6 @@ struct dsi_panel {
 	enum dsi_dms_mode dms_mode;
 
 	bool sync_broadcast_en;
-
-	struct dsi_panel_exd_config exd_config;
 };
 
 static inline bool dsi_panel_ulps_feature_enabled(struct dsi_panel *panel)
@@ -276,6 +261,10 @@ int dsi_panel_get_dfps_caps(struct dsi_panel *panel,
 
 int dsi_panel_pre_prepare(struct dsi_panel *panel);
 
+int dsi_panel_get_osc(struct dsi_panel *panel);
+
+int dsi_panel_set_osc(struct dsi_panel *panel, u8 osc);
+
 int dsi_panel_set_lp1(struct dsi_panel *panel);
 
 int dsi_panel_set_lp2(struct dsi_panel *panel);
@@ -283,6 +272,9 @@ int dsi_panel_set_lp2(struct dsi_panel *panel);
 int dsi_panel_set_nolp(struct dsi_panel *panel);
 
 int dsi_panel_prepare(struct dsi_panel *panel);
+
+/* ASUS BSP Display, add for dfps */
+int dsi_panel_asusFps(struct dsi_panel *panel, int type);
 
 int dsi_panel_enable(struct dsi_panel *panel);
 

@@ -33,7 +33,7 @@
 #include <linux/types.h>
 #include <linux/uaccess.h>
 #include <linux/pmic-voter.h>
-
+#include <linux/extcon.h>	//ASUS BSP +++
 
 #define fg_dbg(chip, reason, fmt, ...)			\
 	do {							\
@@ -54,7 +54,7 @@
 #define SRAM_WRITE		"fg_sram_write"
 #define PROFILE_LOAD		"fg_profile_load"
 #define TTF_PRIMING		"fg_ttf_priming"
-#define FG_ESR_VOTER		"fg_esr_voter"
+//#define FG_ESR_VOTER		"fg_esr_voter"
 
 /* Delta BSOC irq votable reasons */
 #define DELTA_BSOC_IRQ_VOTER	"fg_delta_bsoc_irq"
@@ -79,7 +79,7 @@
 #define FG_SRAM_LEN			504
 #define PROFILE_LEN			224
 #define PROFILE_COMP_LEN		148
-#define BUCKET_COUNT			8
+#define BUCKET_COUNT			20
 #define BUCKET_SOC_PCT			(256 / BUCKET_COUNT)
 
 #define KI_COEFF_MAX			62200
@@ -201,7 +201,6 @@ enum fg_sram_param_id {
 	FG_SRAM_ESR_TIGHT_FILTER,
 	FG_SRAM_ESR_BROAD_FILTER,
 	FG_SRAM_SLOPE_LIMIT,
-	FG_SRAM_KI_COEFF_CUTOFF_SOC,// ASUS_BSP
 	FG_SRAM_MAX,
 };
 
@@ -278,6 +277,27 @@ enum ttf_mode {
 	TTF_MODE_QNOVO,
 };
 
+//[+++] LiJen implement power bank and balance mode
+enum bat_stage {
+	BAT_STAGE_NULL = 0,
+	BAT_STAGE_A,
+	BAT_STAGE_B,
+};
+
+enum bat_policy {
+	BAT_BALANCE_MODE = 0,
+	BAT_POWER_BANK_MODE,
+	BAT_BYPASS_MODE,
+};
+
+enum bat_charger_state {
+	BAT_CHARGER_NULL = 0,
+	BAT_CHARGER_PMI_ACTIVE,
+	BAT_CHARGER_PMI_SUSPEND,
+	BAT_CHARGER_LPM_MODE,
+};
+//[---] LiJen implement power bank and balance mode	
+
 /* DT parameters for FG device */
 struct fg_dt_props {
 	bool	force_load_profile;
@@ -328,7 +348,6 @@ struct fg_dt_props {
 	int	bmd_en_delay_ms;
 	int	ki_coeff_full_soc_dischg;
 	int	ki_coeff_hi_chg;
-	int	ki_coeff_cutoff_soc;// ASUS_BSP
 	int	jeita_thresholds[NUM_JEITA_LEVELS];
 	int	ki_coeff_soc[KI_COEFF_SOC_LEVELS];
 	int	ki_coeff_low_dischg[KI_COEFF_SOC_LEVELS];
@@ -399,19 +418,6 @@ struct ttf {
 	s64			last_ms;
 };
 
-struct BATT_SAFETY_UPGRADE_CONDITIONS{
-	unsigned long condition1_battery_time;
-	unsigned long condition2_battery_time;
-	int condition1_cycle_count;
-	int condition2_cycle_count;
-	unsigned long condition1_temp_vol_time;
-	unsigned long condition2_temp_vol_time;
-	unsigned long condition1_temp_time;
-	unsigned long condition2_temp_time;
-	unsigned long condition1_vol_time;
-	unsigned long condition2_vol_time;
-};
-
 static const struct fg_pt fg_ln_table[] = {
 	{ 1000,		0 },
 	{ 2000,		693 },
@@ -477,7 +483,7 @@ struct fg_chip {
 	struct mutex		sram_rw_lock;
 	struct mutex		charge_full_lock;
 	struct mutex		qnovo_esr_ctrl_lock;
-	struct BATT_SAFETY_UPGRADE_CONDITIONS safety_upgrade_cond;//ASUS
+	struct mutex		charge_status_lock;	//ASUS BSP charger +++
 	spinlock_t		awake_lock;
 	spinlock_t		suspend_lock;
 	u32			batt_soc_base;
@@ -500,12 +506,6 @@ struct fg_chip {
 	int			maint_soc;
 	int			delta_soc;
 	int			last_msoc;
-	int			last_full_bsoc;//asus bsp +++
-	int			last_report_msoc;//asus bsp +++
-	int			asus_need_keep_report_full;//asus bsp +++
-	int			asus_pending_report_full;//asus bsp +++
-	int			asus_profile_changed;//asus bsp +++
-	unsigned long		asus_report_last_msoc_end_time;// asus bsp +++
 	int			last_recharge_volt_mv;
 	int			delta_temp_irq_count;
 	int			esr_timer_charging_default[NUM_ESR_TIMERS];
@@ -517,6 +517,7 @@ struct fg_chip {
 	bool			battery_missing;
 	bool			fg_restarting;
 	bool			charge_full;
+	bool			reporting_charge_full;	//ASUS BSP charger +++
 	bool			recharge_soc_adjusted;
 	bool			ki_coeff_dischg_en;
 	bool			esr_fcc_ctrl_en;
@@ -533,7 +534,6 @@ struct fg_chip {
 	struct completion	soc_ready;
 	struct delayed_work	profile_load_work;
 	struct work_struct	status_change_work;
-	struct delayed_work	asus_check_full_work;
 	struct work_struct	esr_sw_work;
 	struct delayed_work	ttf_work;
 	struct delayed_work	sram_dump_work;
@@ -541,11 +541,92 @@ struct fg_chip {
 	struct work_struct	esr_filter_work;
 	struct alarm		esr_filter_alarm;
 	ktime_t			last_delta_temp_time;
-	struct delayed_work	safety_upgrade_work;//ASUS
-	u8			profile_value_esr_rslow_chg;
-	u8			profile_value_esr_rslow_dischg;
-	int			profile_offset_esr_rslow_chg;
-	int			profile_offset_esr_rslow_dischg;
+//ASUS BSP +++
+	struct delayed_work	asus_battery_version_work;
+	struct delayed_work	update_gauge_status_work;
+	struct delayed_work 	update_station_status_work;
+	struct extcon_dev	*bat_ver_extcon;
+	struct extcon_dev	*bat_id_extcon;
+	struct extcon_dev	*st_present_extcon;
+	struct extcon_dev	*st_bat_cap_extcon;
+	struct extcon_dev	*st_bat_stat_extcon;
+	int			hid_suspend_id;
+//ASUS BSP ---
+//[+++]Add for battery safety upgrade
+	unsigned long condition1_battery_time;
+	unsigned long condition2_battery_time;
+	int condition1_cycle_count;
+	int condition2_cycle_count;
+	unsigned long condition1_temp_vol_time;
+	unsigned long condition2_temp_vol_time;
+	unsigned long condition1_temp_time;
+	unsigned long condition2_temp_time;
+	unsigned long condition1_vol_time;
+	unsigned long condition2_vol_time;
+//[---]Add for battery safety upgrade
+	struct delayed_work battery_health_work; //Add for battery health upgrade
+	struct delayed_work init_batt_health_work; //Add for battery health upgrade
+};
+
+//ASUS_BS battery health upgrade +++
+#define BAT_HEALTH_NUMBER_MAX 21
+struct BAT_HEALTH_DATA{
+	int magic;
+	int bat_current;
+	unsigned long long bat_current_avg;
+	unsigned long long accumulate_time; //second
+	unsigned long long accumulate_current; //uA
+	int bat_health;
+	unsigned long start_time;
+	unsigned long end_time;
+};
+struct BAT_HEALTH_DATA_BACKUP{
+    char date[20];
+    int health;
+};
+//ASUS_BS battery health upgrade ---
+
+//[+++]Add for battery safety upgrade
+/* Cycle Count Date Structure saved in emmc
+ * magic - magic number for data verification
+ * charge_cap_accum - Accumulated charging capacity
+ * charge_last_soc - last saved soc before reset/shutdown
+ * [0]:battery_soc [1]:system_soc [2]:monotonic_soc
+ */
+struct CYCLE_COUNT_DATA{
+	int magic;
+	int cycle_count;
+	unsigned long battery_total_time;
+	unsigned long high_vol_total_time;
+	unsigned long high_temp_total_time;
+	unsigned long high_temp_vol_time;
+	u32 reload_condition;
+};
+
+#define HIGH_TEMP   350
+#define HIGHER_TEMP 450
+#define FULL_CAPACITY_VALUE 100
+#define BATTERY_USE_TIME_CONDITION1  (12*30*24*60*60) //12Months
+#define BATTERY_USE_TIME_CONDITION2  (18*30*24*60*60) //18Months
+#define CYCLE_COUNT_CONDITION1  100
+#define CYCLE_COUNT_CONDITION2  400
+#define HIGH_TEMP_VOL_TIME_CONDITION1 (15*24*60*60)  //15Days
+#define HIGH_TEMP_VOL_TIME_CONDITION2 (30*24*60*60)  //30Days
+#define HIGH_TEMP_TIME_CONDITION1     (6*30*24*60*60) //6Months
+#define HIGH_TEMP_TIME_CONDITION2     (12*30*24*60*60) //12Months
+#define HIGH_VOL_TIME_CONDITION1     (6*30*24*60*60) //6Months
+#define HIGH_VOL_TIME_CONDITION2     (12*30*24*60*60) //12Months
+
+enum calculation_time_type {
+	TOTOL_TIME_CAL_TYPE,
+	HIGH_VOL_CAL_TYPE,
+	HIGH_TEMP_CAL_TYPE,
+	HIGH_TEMP_VOL_CAL_TYPE,
+};
+//[---]Add for battery safety upgrade
+
+static const unsigned int asus_fg_extcon_cable[] = {
+	EXTCON_NONE,
 };
 
 /* Debugfs data structures are below */

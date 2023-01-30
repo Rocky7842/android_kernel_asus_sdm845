@@ -1,4 +1,4 @@
-/* Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -570,7 +570,7 @@ enum {
 
 #define TYPE_C_CFG_2_REG			(USBIN_BASE + 0x59)
 #define TYPE_C_DFP_CURRSRC_MODE_BIT		BIT(7)
-#define DFP_CC_1P4V_OR_1P6V_BIT			BIT(6)
+#define VCONN_ILIM500MA_CFG_BIT			BIT(6)
 #define VCONN_SOFTSTART_CFG_MASK		GENMASK(5, 4)
 #define EN_TRY_SOURCE_MODE_BIT			BIT(3)
 #define USB_FACTORY_MODE_ENABLE_BIT		BIT(2)
@@ -586,6 +586,12 @@ enum {
 #define EN_TRYSINK_MODE_BIT			BIT(2)
 #define EN_LEGACY_CABLE_DETECTION_BIT		BIT(1)
 #define ALLOW_PD_DRING_UFP_TCCDB_BIT		BIT(0)
+
+//ASUS BSP charger +++
+#define HVDCP_PULSE_COUNT_MAX		(USBIN_BASE + 0x5B)
+#define HVDCP_PULSE_COUNT_MAX_QC2P0		GENMASK(7, 6)
+#define HVDCP_PULSE_COUNT_MAX_QC3P0		GENMASK(5, 0)
+//ASUS BSP charger ---
 
 #define HVDCP_PULSE_COUNT_MAX_REG		(USBIN_BASE + 0x5B)
 #define HVDCP_PULSE_COUNT_MAX_QC2_MASK		GENMASK(7, 6)
@@ -639,6 +645,7 @@ enum {
 #define USBIN_LOAD_CFG_REG			(USBIN_BASE + 0x65)
 #define USBIN_OV_CH_LOAD_OPTION_BIT		BIT(7)
 #define ICL_OVERRIDE_AFTER_APSD_BIT		BIT(4)
+#define USBIN_IN_COLLAPSE_GF			GENMASK(1, 0)
 
 #define USBIN_ICL_OPTIONS_REG			(USBIN_BASE + 0x66)
 #define CFG_USB3P0_SEL_BIT			BIT(2)
